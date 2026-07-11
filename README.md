@@ -1,5 +1,10 @@
 # Dataset Explorer
 
+The plan is to create an interactive dashboard that helps to summarise dataset based 
+on the given filters. Today, I added a basic template for this project made using Claude AI. 
+I will subsequently change the filters and add cleaned data. I am planning to add data from Indian NSS
+surveys so that it's easier to interpret and understand. 
+
 A static, no-backend dashboard: filter a dataset with sliders/radios/checkboxes
 and watch summary statistics (count, mean, median, std dev, min/max, category
 splits) update live. Pure HTML/CSS/JS — no build step, no server, hosts free
