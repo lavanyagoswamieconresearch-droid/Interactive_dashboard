@@ -1,5 +1,5 @@
-#Time Use Explorer
-##A static, no-backend dashboard for time-use panel data: filter by demographic
+# Time Use Explorer
+A static, no-backend dashboard for time-use panel data: filter by demographic
 characteristics and watch a "day in the life" stacked-area chart show what
 the filtered group is doing at every hour, plus a summary table of
 participation rates and average minutes per activity. Pure HTML/CSS/JS — no
@@ -7,7 +7,7 @@ build step, no server, hosts free on GitHub Pages.
 It ships with a small synthetic sample (`data/aggregated\_cube.csv` and
 `data/timeline\_cube.csv`) so you can see it working immediately. Swap in
 your own data by following the steps below.
-Run it locally
+## Run it locally
 Browsers block `fetch()` of local files from `file://`, so serve the folder
 instead of double-clicking `index.html`:
 ```bash
@@ -15,7 +15,7 @@ cd dataset-explorer
 python3 -m http.server 8000
 # then open http://localhost:8000
 ```
-How the data pipeline works
+## How the data pipeline works
 Because the underlying dataset has 10M+ raw episode-level rows, the
 dashboard doesn't load raw rows at all. Instead, `build\_dashboard\_cubes.do`
 (the Stata script) pre-aggregates everything into two small CSVs:
@@ -28,11 +28,11 @@ time. Powers the stacked-area day chart.
 Both are joined in the browser by matching demographic columns against
 whatever filters are currently selected — no raw microdata ever touches the
 browser.
-Use your own dataset
+## Use your own dataset
 Run `build\_dashboard\_cubes.do` in Stata against your real data (edit the
 `>>> EDIT <<<` sections for your file path and small-cell suppression
 thresholds).
-Drop the two resulting CSVs into `data/`.
+## Drop the two resulting CSVs into `data/`.
 Open `js/app.js` and edit the `CONFIG` object at the top:
 ```js
 const CONFIG = {
@@ -69,11 +69,11 @@ several selected at once (e.g. religion, day of week).
 If your activity codes are numeric or abbreviated, fill in
 `activityLabels` so the chart legend and table show readable names instead
 of raw codes.
-Deploy to GitHub Pages
+## Deploy to GitHub Pages
 Settings → Pages → Source → Deploy from a branch → `main` / `(root)`. See
 the full click-by-click walkthrough in the chat where this was built if
 needed — same steps apply regardless of the CSV changes.
-File structure
+## File structure
 ```
 dataset-explorer/
 ├── index.html                 # page structure
@@ -84,7 +84,7 @@ dataset-explorer/
 ├── build\_dashboard\_cubes.do     # Stata script that builds the two cubes from raw data
 └── README.md
 ```
-Notes on the chart
+## Notes on the chart
 Only the top `topActivitiesInChart` activities (by overall participation)
 get their own stacked colour; everything else is folded into "Other".
 Click a legend chip or a row in the activity table to focus the chart on
