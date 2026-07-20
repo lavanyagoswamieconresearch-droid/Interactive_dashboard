@@ -18,7 +18,8 @@ const CONFIG = {
     { column: "religion",                   label: "Religion",                   type: "checkbox" },
     { column: "social_group",               label: "Social group",               type: "checkbox" },
     { column: "marital_status",             label: "Marital status",             type: "checkbox" },
-    { column: "day_of_week",                label: "Day of week",                type: "checkbox" },
+    { column: "day_of_week",                label: "Day of week",                type: "checkbox",
+      order: ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"] },
     { column: "principal_activity_status",  label: "Principal activity status",  type: "checkbox" }
   ],
 
@@ -129,12 +130,22 @@ function activityLabel(code) {
 
 /* ---------- filters ---------- */
 
+function orderedOptions(f) {
+  const present = [...new Set(RAW_AGG.map(r => r[f.column]).filter(v => v !== undefined && v !== null && v !== ""))];
+  if (f.order && f.order.length) {
+    const known = f.order.filter(o => present.includes(o));
+    const extra = present.filter(o => !f.order.includes(o)).sort();
+    return [...known, ...extra];
+  }
+  return present.sort();
+}
+
 function initFilters() {
   const container = document.getElementById("filterControls");
   container.innerHTML = "";
 
   CONFIG.demoFilters.forEach(f => {
-    const options = [...new Set(RAW_AGG.map(r => r[f.column]).filter(v => v !== undefined && v !== null && v !== ""))].sort();
+    const options = orderedOptions(f);
     if (f.type === "radio") {
       ACTIVE[f.column] = new Set(["__ALL__"]);
       container.appendChild(buildRadioBlock(f, options));
