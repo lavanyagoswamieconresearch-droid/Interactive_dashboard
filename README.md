@@ -1,5 +1,5 @@
-Time Use Explorer
-A static, no-backend dashboard for time-use panel data: filter by demographic
+#Time Use Explorer
+##A static, no-backend dashboard for time-use panel data: filter by demographic
 characteristics and watch a "day in the life" stacked-area chart show what
 the filtered group is doing at every hour, plus a summary table of
 participation rates and average minutes per activity. Pure HTML/CSS/JS — no
