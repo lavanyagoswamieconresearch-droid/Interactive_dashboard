@@ -1,105 +1,97 @@
-# Dataset Explorer
-
-The plan is to create an interactive dashboard that helps to summarise dataset based 
-on the given filters. Today, I added a basic template for this project made using Claude AI. 
-I will subsequently change the filters and add cleaned data. I am planning to add data from Indian NSS
-surveys so that it's easier to interpret and understand. 
-
-A static, no-backend dashboard: filter a dataset with sliders/radios/checkboxes
-and watch summary statistics (count, mean, median, std dev, min/max, category
-splits) update live. Pure HTML/CSS/JS — no build step, no server, hosts free
-on GitHub Pages.
-
-It currently ships with a synthetic 240-row sample (`data/sample.csv`:
-age, gender, region, income, satisfaction) so you can see it working
-immediately. Swap in your own data by following the steps below.
-
-## Run it locally
-
+Time Use Explorer
+A static, no-backend dashboard for time-use panel data: filter by demographic
+characteristics and watch a "day in the life" stacked-area chart show what
+the filtered group is doing at every hour, plus a summary table of
+participation rates and average minutes per activity. Pure HTML/CSS/JS — no
+build step, no server, hosts free on GitHub Pages.
+It ships with a small synthetic sample (`data/aggregated\_cube.csv` and
+`data/timeline\_cube.csv`) so you can see it working immediately. Swap in
+your own data by following the steps below.
+Run it locally
 Browsers block `fetch()` of local files from `file://`, so serve the folder
 instead of double-clicking `index.html`:
-
 ```bash
 cd dataset-explorer
 python3 -m http.server 8000
 # then open http://localhost:8000
 ```
-
-## Use your own dataset
-
-1. Drop your CSV into `data/` (e.g. `data/mydata.csv`). First row must be
-   column headers.
-2. Open `js/app.js` and edit the `CONFIG` object at the top of the file:
-
+How the data pipeline works
+Because the underlying dataset has 10M+ raw episode-level rows, the
+dashboard doesn't load raw rows at all. Instead, `build\_dashboard\_cubes.do`
+(the Stata script) pre-aggregates everything into two small CSVs:
+`aggregated\_cube.csv` — one row per (demographic combination x
+activity), with participation counts, participation rate, and average
+minutes. Powers the activity summary table.
+`timeline\_cube.csv` — one row per (demographic combination x time
+slot x activity), with how many people were doing that activity at that
+time. Powers the stacked-area day chart.
+Both are joined in the browser by matching demographic columns against
+whatever filters are currently selected — no raw microdata ever touches the
+browser.
+Use your own dataset
+Run `build\_dashboard\_cubes.do` in Stata against your real data (edit the
+`>>> EDIT <<<` sections for your file path and small-cell suppression
+thresholds).
+Drop the two resulting CSVs into `data/`.
+Open `js/app.js` and edit the `CONFIG` object at the top:
 ```js
 const CONFIG = {
-  csvPath: "data/mydata.csv",
-  title: "My Survey Explorer",
-  subtitle: "Filter respondents, see the stats update.",
+  aggregatedCsvPath: "data/aggregated\_cube.csv",
+  timelineCsvPath: "data/timeline\_cube.csv",
+  title: "Time Use Explorer",
+  subtitle: "Filter by who they are, watch what they're doing all day.",
 
-  // one dual-handle slider per numeric column you want to filter on
-  rangeFilters: [
-    { column: "age", label: "Age" }
+  demoFilters: \[
+    { column: "gender", label: "Gender", type: "radio" },
+    { column: "sector", label: "Sector", type: "radio" },
+    { column: "religion", label: "Religion", type: "checkbox" },
+    { column: "social\_group", label: "Social group", type: "checkbox" },
+    { column: "marital\_status", label: "Marital status", type: "checkbox" },
+    { column: "day\_of\_week", label: "Day of week", type: "checkbox" },
+    { column: "principal\_activity\_status", label: "Principal activity status", type: "checkbox" }
   ],
 
-  // one radio group per categorical column, single-select + "All"
-  radioFilters: [
-    { column: "gender", label: "Gender" }
-  ],
+  activityColumn: "activity\_type",
 
-  // one checkbox group per categorical column, multi-select
-  checkboxFilters: [
-    { column: "region", label: "Region" }
-  ],
+  // Optional: map raw activity codes to readable names
+  activityLabels: {
+    // "1": "Sleeping",
+  },
 
-  // numeric columns to summarise as stat cards
-  numericStats: [
-    { column: "age", label: "Age" },
-    { column: "income", label: "Income", prefix: "$" }
-  ],
-
-  // categorical columns to show as % breakdown bars
-  categoricalBreakdowns: [
-    { column: "gender", label: "Gender split" }
-  ]
+  topActivitiesInChart: 8
 };
 ```
-
-Column names must match your CSV header exactly. Slider min/max and the
-option lists for radios/checkboxes are detected automatically from the data
-— you don't set them by hand. Numbers in the CSV (age, income, etc.) are
-auto-typed by PapaParse as long as the cells contain plain numbers.
-
-## Deploy to GitHub Pages
-
-```bash
-git init
-git add .
-git commit -m "Dataset explorer"
-git branch -M main
-git remote add origin https://github.com/<you>/<repo>.git
-git push -u origin main
-```
-
-Then in the repo: **Settings → Pages → Source → Deploy from branch → main /
-(root)**. Your dashboard will be live at
-`https://<you>.github.io/<repo>/` a minute or two later.
-
-## File structure
-
+Column names must match your CSV headers exactly. Filter option lists are
+detected automatically from the data — you don't set them by hand. Use
+`type: "radio"` for filters where only one value makes sense at a time (e.g.
+gender), and `type: "checkbox"` for filters where the user might want
+several selected at once (e.g. religion, day of week).
+If your activity codes are numeric or abbreviated, fill in
+`activityLabels` so the chart legend and table show readable names instead
+of raw codes.
+Deploy to GitHub Pages
+Settings → Pages → Source → Deploy from a branch → `main` / `(root)`. See
+the full click-by-click walkthrough in the chat where this was built if
+needed — same steps apply regardless of the CSV changes.
+File structure
 ```
 dataset-explorer/
-├── index.html          # page structure
-├── css/style.css        # design system (edit CSS variables at top to re-theme)
-├── js/app.js             # CONFIG + all filtering/stats logic
-├── data/sample.csv       # swap this for your dataset (or point CONFIG.csvPath elsewhere)
+├── index.html                 # page structure
+├── css/style.css               # design system (edit CSS variables at top to re-theme)
+├── js/app.js                    # CONFIG + all filtering/chart/table logic
+├── data/aggregated\_cube.csv     # swap for your real cube (from the .do file)
+├── data/timeline\_cube.csv       # swap for your real cube (from the .do file)
+├── build\_dashboard\_cubes.do     # Stata script that builds the two cubes from raw data
 └── README.md
 ```
-
-## Notes
-
-- Everything runs client-side; your CSV never leaves the browser (fine for
-  GitHub Pages, but don't put sensitive data in a *public* repo).
-- Large CSVs (tens of thousands of rows) will still work — computation is a
-  single pass per render — but very large files (>50k rows) may feel less
-  snappy on slider drag since it recomputes on every `input` event.
+Notes on the chart
+Only the top `topActivitiesInChart` activities (by overall participation)
+get their own stacked colour; everything else is folded into "Other".
+Click a legend chip or a row in the activity table to focus the chart on
+just that one activity (shows a single area instead of the full stack).
+Click again, or "Show all activities", to go back.
+The metric toggle switches the y-axis between raw people-count and % of
+the currently filtered group.
+Small cells are suppressed at the Stata stage (thresholds are the
+`>>> EDIT <<<` lines in the `.do` file) — adjust those to match your own
+disclosure rules before publishing.
